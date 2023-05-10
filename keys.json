@@ -1,0 +1,38 @@
+{
+    "IWidYHH6": {
+        "uses": 0,
+        "amount": 50,
+        "type": "offline",
+        "start": 5000
+    },
+    "chlNVyNz": {
+        "uses": 0,
+        "amount": 50,
+        "type": "offline",
+        "start": 1
+    },
+    "CU0a2cId": {
+        "uses": 0,
+        "amount": 50,
+        "type": "offline",
+        "start": 100
+    },
+    "1iF7qiRt": {
+        "uses": 0,
+        "amount": 50,
+        "type": "offline",
+        "start": 100
+    },
+    "UfNd2lM8": {
+        "uses": 0,
+        "amount": 50,
+        "type": "offline",
+        "start": 0
+    },
+    "PiGcHeII": {
+        "uses": 0,
+        "amount": 50,
+        "type": "online",
+        "start": 0
+    }
+}
