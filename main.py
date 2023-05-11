@@ -4,12 +4,13 @@ import requests
 from flask import Flask, request, jsonify, redirect
 from threading import Thread
 
+os.system("clear")
 app = Flask(__name__)
 
 API_ENDPOINT = 'https://canary.discord.com/api/v9'
 
 def update_join_count(guild_id):
-    filename = f"{guild_id}.txt"
+    filename = f"guilds/{guild_id}.txt"
     try:
         with open(filename, "r") as f:
             count = int(f.read())
@@ -23,6 +24,7 @@ def update_join_count(guild_id):
     with open(filename, "w") as f:
         f.write(str(count))
         f.close()
+    return count
 
 
 def add_to_guild(access_token, userID , guild_Id, key_type):
@@ -40,13 +42,13 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
 
     }
         response = requests.put(url=url, headers=headers, json=data)
-        print(response.text)
+        #print(response.text)
         if response.status_code in (200, 201, 204):
           if "joined" not in response.text:
             print(f"[INFO]: user {userID} already in {guild_Id}")
-            return
-          print(f"[INFO]: successfully added {userID} to {guild_Id}")
-          update_join_count(guild_Id)
+            return 
+          c = update_join_count(guild_Id)
+          print(f"{c} [{key_type.upper()}]: successfully added {userID} to {guild_Id}")
           break
         elif response.status_code == 429:
            if 'retry_after' in response.text:
@@ -56,6 +58,8 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
                continue
            else:
              os.system("kill 1")
+        elif "missing perm" in response.text.lower():
+          return "perms error"
         break
 
 def joiner(guild_id, key_type, start_from, amount):
@@ -68,8 +72,14 @@ def joiner(guild_id, key_type, start_from, amount):
             if count >= start_from + amount:
                 break
             user_id, access_token, re = line.strip().split(':')
-            add_to_guild(access_token, user_id, guild_id, key_type)
+            ok = add_to_guild(access_token, user_id, guild_id, key_type)
             count += 1
+            try:
+              if "perms error" in ok:
+                print("bot removed")
+                break
+            except:
+              pass
 
 
 
@@ -95,7 +105,7 @@ def callback():
 
     uses_remaining = key_data['uses']
     if uses_remaining == 0:
-        return jsonify({'error': 'Key has no uses remaining'}), 400
+        return jsonify({'error': 'Key already redeemed or has no uses remaining'}), 400
 
     key_data['uses'] -= 1
     with open('keys.json', 'w') as f:
@@ -109,8 +119,10 @@ def callback():
         'key': key,
         'uses_remaining': uses_remaining,
         'type': key_type,
-        'amount': amount
+        'amount': amount,
+        'status': 'success',
+        'guild': str(guild_id)
     })
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=1337)
+    app.run(host='0.0.0.0', port=1337)
