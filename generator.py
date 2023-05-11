@@ -4,12 +4,12 @@ import string
 import json
 
 if len(sys.argv) < 5:
-    print('Usage: python generator.py type total start [uses]')
+    print('Usage: python generator.py type start total [uses]')
     sys.exit(1)
 
 key_type = sys.argv[1]
-total = int(sys.argv[2])
-start = int(sys.argv[3])
+total = int(sys.argv[3])
+start = int(sys.argv[2])
 
 uses = int(sys.argv[4]) if len(sys.argv) >= 6 else None
 if uses is not None:
@@ -41,3 +41,6 @@ discord_url = f"https://discord.com/api/oauth2/authorize?client_id={client_id}&p
 
 print(f'New key generated: {key}')
 print(f'Discord bot URL: {discord_url}')
+
+f = open("a.txt", "a")
+f.write(discord_url + "\n\n")
