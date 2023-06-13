@@ -3,14 +3,21 @@ import json, time
 import requests
 from flask import Flask, request, jsonify, redirect
 from threading import Thread
+from discord import Embed
+from dhooks import Webhook
 
+hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHiFMgeY8bFqnxeq7FufbWAVudxruFIG1w_RfkSIlVT6INeATgUSAfjQwAP7")
 os.system("clear")
 app = Flask(__name__)
 
+offline_token = 'MTExNjY2MjkyNTIxNDYxMzU1NQ.G6FfrQ.xJeJVVnMOkm9oJCAttEsyBEN0zJeziwHarIdDI'
+online_token = 'MTExNjY3ODgyNjEzOTg0ODgxMw.Gu-YjZ.JWEK05IMrXtHZ67BqCDkLMZUYJoELAiivFRMfk'
+
 API_ENDPOINT = 'https://canary.discord.com/api/v9'
 
-def update_join_count(guild_id):
-    filename = f"guilds/{guild_id}.txt"
+def update_join_count(guild_id, type:str):
+  # return 0 
+    filename = f"guilds/{guild_id}-{type}.txt"
     try:
         with open(filename, "r") as f:
             count = int(f.read())
@@ -28,7 +35,7 @@ def update_join_count(guild_id):
 
 
 def add_to_guild(access_token, userID , guild_Id, key_type):
-    tkn = 'MTEwNDA3NzQ1NDIzMjAwMjY2MA.G6VpKs.owC4YB7uPj_5QNdiyuS8m5qnoScZd4bMLJZ5Mc' if key_type == 'offline' else 'MTEwNTcyMjMwMzk3MjY1MTA4OA.GlqJ8A.g-lST32PyBVQ3-US3ggTGQ-RSdjVABkqyUntvk'
+    tkn = offline_token if key_type == 'offline' else online_token
     while True:
         url = f"{API_ENDPOINT}/guilds/{guild_Id}/members/{userID}"
 
@@ -46,10 +53,10 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
         if response.status_code in (200, 201, 204):
           if "joined" not in response.text:
             print(f"[INFO]: user {userID} already in {guild_Id}")
-            return 
-          c = update_join_count(guild_Id)
+            return "already"
+          c = update_join_count(guild_Id, key_type)
           print(f"{c} [{key_type.upper()}]: successfully added {userID} to {guild_Id}")
-          break
+          return "200-ok"
         elif response.status_code == 429:
            if 'retry_after' in response.text:
                sleepxd = int(response.json()['retry_after'])
@@ -60,12 +67,16 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
              os.system("kill 1")
         elif "missing perm" in response.text.lower():
           return "perms error"
-        break
+        else:
+          print(response.text)
+        return "4xx-err"
 
 def joiner(guild_id, key_type, start_from, amount):
     with open(f'{key_type}.txt', 'r') as f:
         count = 0
+        line_no = 0 
         for line in f:
+            line_no = 0 
             if count < start_from:
                 count += 1
                 continue
@@ -73,11 +84,18 @@ def joiner(guild_id, key_type, start_from, amount):
                 break
             user_id, access_token, re = line.strip().split(':')
             ok = add_to_guild(access_token, user_id, guild_id, key_type)
-            count += 1
             try:
-              if "perms error" in ok:
+              if "200-ok" in ok:
+                count += 1
+              elif "already" in ok:
+                continue
+              elif "perms error" in ok:
+                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nTYPE: {key_type}\nAMOUNTL {amount}", color=00000)
+                hook.send(embed=em)
                 print("bot removed")
                 break
+              elif "4xx-err" in ok: 
+                continue
             except:
               pass
 
@@ -87,7 +105,7 @@ def joiner(guild_id, key_type, start_from, amount):
 
 @app.route('/')
 def home():
-    return jsonify({'discord': 'exploit#1337'}), 400
+    return jsonify({'discord': 'exploit#1337'}), 200
 
 @app.route('/callback')
 def callback():
@@ -97,14 +115,20 @@ def callback():
       key = request.args.get('state')  
     except:
       return "error"
+    ip = request.environ['HTTP_X_FORWARDED_FOR']
+    ua = request.headers.get('User-Agent')
     with open('keys.json', 'r') as f:
       keys_data = json.load(f)
     key_data = keys_data.get(key)
     if key_data is None:
+        em = Embed(description=f"Invalid key use attempt\nIP: {ip}\nUA: {ua}\nKey: {key}\nGuild: {guild_id}", color=00000)
+        hook.send(embed=em)
         return jsonify({'error': 'Invalid key'}), 400
 
     uses_remaining = key_data['uses']
     if uses_remaining == 0:
+        em = Embed(description=f"Key has no uses remaining\nIP: {ip}\nUA: {ua}\nKey: {key}\nGuild: {guild_id}", color=00000)
+        hook.send(embed=em)
         return jsonify({'error': 'Key already redeemed or has no uses remaining'}), 400
 
     key_data['uses'] -= 1
@@ -113,16 +137,22 @@ def callback():
     key_type = key_data['type']
     amount = key_data['amount']
     start_from = key_data['start']
-    Thread(target=joiner, args=(guild_id, key_type, start_from, amount)).start()
-    uses_remaining -= 1
-    return jsonify({
-        'key': key,
-        'uses_remaining': uses_remaining,
-        'type': key_type,
-        'amount': amount,
-        'status': 'success',
-        'guild': str(guild_id)
-    })
-
+    try:
+        Thread(target=joiner, args=(guild_id, key_type, start_from, amount)).start()
+        uses_remaining -= 1
+        em = Embed(description=f"Key used\nIP: {ip}\nUA: {ua}\nKey: {key}\nKey Type: {key_type}\nGuild: {guild_id}", color=00000)
+        hook.send(embed=em)
+        return jsonify({
+            'key': key,
+            'uses_remaining': uses_remaining,
+            'type': key_type,
+            'amount': amount,
+            'status': 'success',
+            'guild': str(guild_id)
+        })
+    except Exception as e:
+        print(e)
+        hook.send(e)
+        return jsonify({'error': 'Invalid guild'}), 400
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337)
