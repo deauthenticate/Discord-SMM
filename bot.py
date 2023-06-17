@@ -87,5 +87,10 @@ async def calc(ctx, *, expression):
 @client.command()
 async def ping(ctx):
     await ctx.send(f"{round(client.latency * 1000)}ms")
+    
+@client.command()
+async def vt(ctx, vouch):
+    msg = await ctx.send(f"`+rep <@468818639588687873> {vouch}`")
+    await msg.reply("> copy paste this in <#1119597593048121404> channel.")
 
 client.run(tkn)
