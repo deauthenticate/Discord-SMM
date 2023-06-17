@@ -13,6 +13,9 @@ app = Flask(__name__)
 offline_token = 'MTExODA2NzYzNDU4ODYxNDY4Ng.G1krKC.0ZRj486HoCkdZspXFUSG8RbrttkC-drPnbbtN4'
 online_token = 'MTExODQwOTgxODE2NDY5NTE3MA.GzOWCb.vhwqN71cotbF65ORxhm8yik_l-58Ltuj3UVyn0'
 
+f = open("running.txt", "w")
+f.write("")
+f.close()
 API_ENDPOINT = 'https://canary.discord.com/api/v9'
 
 def update_join_count(guild_id, type:str):
@@ -39,7 +42,6 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
     tkn = offline_token if key_type == 'offline' else online_token
     while True:
         url = f"{API_ENDPOINT}/guilds/{guild_Id}/members/{userID}"
-
         botToken = tkn
         data = {
         "access_token" : access_token,
@@ -60,16 +62,17 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
           return "200-ok"
         elif response.status_code == 429:
            if 'retry_after' in response.text:
-               sleepxd = int(response.json()['retry_after'])
-               print("sleeping for:", sleepxd, "seconds")
+               sleepxd = response.json()['retry_after']
+               print("[DEBUG]: sleeping for:", sleepxd, "seconds")
                time.sleep(sleepxd)
                continue
            else:
              os.system("kill 1")
         elif "missing perm" in response.text.lower():
+          print("[DEBUG]:", response.text)
           return "perms error"
         else:
-          print(response.text)
+          print("[DEBUG]:", response.text)
         return "4xx-err"
 
 def joiner(guild_id, key_type, start_from, amount):
@@ -82,7 +85,12 @@ def joiner(guild_id, key_type, start_from, amount):
                 count += 1
                 continue
             if count >= start_from + amount:
-                running_tasks.remove(guild_id)
+                f = open('running.txt', 'r').read.splitlines()
+                f2 = open('running.txt', 'a')
+                for i in f:
+                  if guild_id in i:
+                    continue
+                  f2.write(i + "\n")
                 break
             user_id, access_token, re = line.strip().split(':')
             ok = add_to_guild(access_token, user_id, guild_id, key_type)
@@ -142,7 +150,10 @@ def callback():
     try:
         Thread(target=joiner, args=(guild_id, key_type, start_from, amount)).start()
         uses_remaining -= 1
-        running_tasks.append(guild_id)
+        f = open("running.txt", "a")
+        f.write(f"{guild_id}\n")
+        f2 = open(f"guilds/{guild_id}-total.txt", "a")
+        f2.write(str(amount))
         em = Embed(description=f"Key used\nIP: {ip}\nUA: {ua}\nKey: {key}\nKey Type: {key_type}\nGuild: {guild_id}", color=00000)
         hook.send(embed=em)
         return jsonify({
@@ -160,9 +171,3 @@ def callback():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337)
 
-@app.route('/status')
-def status():
-        return jsonify(running_tasks), 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=1337)
