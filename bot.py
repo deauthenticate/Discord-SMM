@@ -21,7 +21,7 @@ async def on_command_error(ctx, error):
     await ctx.send(embed=em)
 
 @client.command()
-@commands.cooldown(1, 60, commands.BucketType.user)
+@commands.cooldown(1, 5, commands.BucketType.user)
 async def status(ctx, guild_id= None):
     msg = await ctx.send("Fetching.....")
     if guild_id == None:
@@ -83,7 +83,7 @@ async def generate(ctx, key_type:str, start:int, total:int, uses=None):
     await ctx.send(embed=em)
     
 @client.command()
-@commands.cooldown(1, 30, commands.BucketType.user)
+@commands.cooldown(1, 5, commands.BucketType.user)
 async def redeem(ctx, url):
     r = requests.get(url)
     em = discord.Embed(description=f"{r.json()}", color=00000)
