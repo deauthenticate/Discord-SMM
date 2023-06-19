@@ -46,7 +46,7 @@ async def status(ctx, guild_id= None):
                 estimated_time = f"{minutes}m {seconds}s"
             added_percent = int((int(added) / int(total)) * 100)
             remaining_percent = int((int(remaining) / int(total)) * 100)
-            embed.description += f"Guild: `{guild}`\nAdded: `{added}/{total}` ({added_percent})%\nRemaining: `{remaining}` ({remaining_percent})%\nSpeed: `60/m`\nETA: `{estimated_time}`\n\n"
+            embed.description += f"Guild: `{guild}`\nAdded: `{added}/{total} {added_percent}%`\nRemaining: `{remaining} {remaining_percent}%`\nSpeed: `60/m`\nETA: `{estimated_time}`\n\n"
         await ctx.send(embed=embed)
     else:
             f = open("running.txt", "r").read().splitlines()
@@ -68,7 +68,7 @@ async def status(ctx, guild_id= None):
                 added_percent = int((int(added) / int(total)) * 100)
                 remaining_percent = int((int(remaining) / int(total)) * 100)
                 em = discord.Embed(title=f"Status - {guild_id}", description="", color=00000)
-                em.description += f"Guild: `{guild_id}`\nAdded: `{added}/{total}` ({added_percent})%\nRemaining: `{remaining}` ({remaining_percent})%\nSpeed: `60/m`\nETA: `{estimated_time}`\n\n"
+                em.description += f"Guild: `{guild_id}`\nAdded: `{added}/{total} {added_percent}%`\nRemaining: `{remaining} {remaining_percent}%`\nSpeed: `60/m`\nETA: `{estimated_time}`\n\n"
                 await ctx.send(embed=em)
 
         
