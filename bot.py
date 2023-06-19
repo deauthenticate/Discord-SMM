@@ -5,7 +5,7 @@ import keygen
 
 api = "http://127.0.0.1:1337"
 tkn = "MTExOTUzODU2Mjk1ODg4ODk5MA.GqXI12.o2ZH4NEt1mJYidfHE4PdFjclvzGmVi6N9xz9mc"
-client = commands.Bot(command_prefix="-", intents=discord.Intents.all())
+client = commands.Bot(command_prefix=(["-", "."]), intents=discord.Intents.all())
 
 @client.event
 async def on_ready():
