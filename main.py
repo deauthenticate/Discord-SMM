@@ -6,8 +6,7 @@ from threading import Thread
 from discord import Embed
 from dhooks import Webhook
 
-os.system("cls || clear")
-
+os.system("clear||cls")
 hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHiFMgeY8bFqnxeq7FufbWAVudxruFIG1w_RfkSIlVT6INeATgUSAfjQwAP7")
 os.system("clear")
 app = Flask(__name__)
@@ -43,6 +42,7 @@ running_tasks = []
 def add_to_guild(access_token, userID , guild_Id, key_type):
     tkn = offline_token if key_type == 'offline' else online_token
     while True:
+      try:
         url = f"{API_ENDPOINT}/guilds/{guild_Id}/members/{userID}"
         botToken = tkn
         data = {
@@ -76,7 +76,8 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
         else:
           print("[DEBUG]:", response.text)
         return "4xx-err"
-
+      except:
+        continue
 def joiner(guild_id, key_type, start_from, amount):
     with open(f'{key_type}.txt', 'r') as f:
         count = 0
