@@ -5,6 +5,9 @@ import keygen
 
 api = "http://127.0.0.1:1337"
 tkn = "MTExOTUzODU2Mjk1ODg4ODk5MA.GqXI12.o2ZH4NEt1mJYidfHE4PdFjclvzGmVi6N9xz9mc"
+offline_token = 'MTEyMTM3MzA3MjI0Nzc3MTIwNg.GuknFw.fjlCbAGh4ofc_nJeBEz5wYVVIghr8MJQVJdWtA'
+online_token = 'MTExODQwOTgxODE2NDY5NTE3MA.GzOWCb.vhwqN71cotbF65ORxhm8yik_l-58Ltuj3UVyn0'
+
 client = commands.Bot(command_prefix=(["-", "."]), intents=discord.Intents.all())
 
 @client.event
@@ -79,12 +82,15 @@ async def generate(ctx, key_type:str, start:int, total:int, uses=None):
     if "exploit" not in ctx.author.name.lower():
         return await ctx.send("unauthorized")
     key, url = keygen.generate_key(key_type=key_type, total=total, start=start, uses=uses)
-    em = discord.Embed(title="Key Generated", description=f"Key: `{key}`\nType: `{key_type}`\nAmount: `{total}`\n\nBot Invite: [Click here to Invite]({url})\n\nNote: It will start automatically as soon as you add the bot, if didn't start re add without kicking the bot and let the redirected page load. If the redirected page dosen't load, copy paste it and type command .redeem <redirected-url> in your ticket to trigger joiner.", color=00000)
+    em = discord.Embed(title="Key Generated", description=f"Key: `{key}`\nType: `{key_type}`\nAmount: `{total}`\n\nBot Invite: [Click here to Invite]({url})\n\nNote: ```It will start automatically as soon as you add the bot, if didn't start make sure the bot is in server and send command .redeem```", color=00000)
     await ctx.send(embed=em)
     
 @client.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
-async def redeem(ctx, url):
+async def redeem(ctx, key=None, server_id=None):
+    if key == None or server_id == None:
+        return await ctx.send("usage: .redeem <key> <server-id>")
+    url = f"http://5.249.163.196:1337/callback?code=ded&state={key}&guild_id={server_id}&permissions=1"
     r = requests.get(url)
     em = discord.Embed(description=f"{r.json()}", color=00000)
     return await ctx.send(embed=em)
@@ -116,4 +122,52 @@ async def ping(ctx):
 async def vt(ctx, *, vouch):
     msg = await ctx.send(f"`+rep <@468818639588687873> {vouch}`")
     await msg.reply("> copy paste this in <#1119597593048121404> channel.")
+
+@client.command()
+async def leave(ctx, type:str, guild: str):
+    if not ctx.author.guild_permissions.administrator:
+        return await ctx.send("unauthorized")
+    if "exploit" not in ctx.author.name.lower():
+        return await ctx.send("unauthorized")
+    if type == "offline": 
+        f = open("running.txt", "r").read().splitlines()
+        with open("running.txt", "w") as f2:
+            for line in f:
+                line = line.strip()
+                if guild not in line:
+                    f2.write(line+"\n")
+        f2.close()
+        try:
+            os.remove("guilds/"+guild+".txt")
+        except:
+            pass
+        try:
+            os.remove("guilds/"+guild+"-total.txt")
+        except:
+            pass
+        r = requests.delete("https://canary.discord.com/api/v9/users/@me/guilds/"+guild, headers={"Authorization": "Bot "+offline_token})
+        em = discord.Embed(description=f"{r.json()}", color=00000)
+        return await ctx.send(embed=em)
+    elif type == "online":
+        f = open("running.txt", "r").read().splitlines()
+        with open("running.txt", "w") as f2:
+            for line in f:
+                line = line.strip()
+                if guild not in line:
+                    f2.write(line+"\n")
+        f2.close()
+        try:
+            os.remove("guilds/"+guild+".txt")
+        except:
+            pass
+        try:
+            os.remove("guilds/"+guild+"-total.txt")
+        except:
+            pass
+        r = requests.delete("https://canary.discord.com/api/v9/users/@me/guilds/"+guild, headers={"Authorization": "Bot "+online_token})
+        em = discord.Embed(description=f"{r.json()}", color=00000)
+        return await ctx.send(embed=em)
+    else:
+        return await ctx.send("Invalid type, type can be either offline or online.")
+
 client.run(tkn)
