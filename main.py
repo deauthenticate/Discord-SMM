@@ -11,7 +11,7 @@ hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHi
 os.system("clear")
 app = Flask(__name__)
 
-offline_token = 'MTExODA2NzYzNDU4ODYxNDY4Ng.G1krKC.0ZRj486HoCkdZspXFUSG8RbrttkC-drPnbbtN4'
+offline_token = 'MTEyMTM3MzA3MjI0Nzc3MTIwNg.GuknFw.fjlCbAGh4ofc_nJeBEz5wYVVIghr8MJQVJdWtA'
 online_token = 'MTExODQwOTgxODE2NDY5NTE3MA.GzOWCb.vhwqN71cotbF65ORxhm8yik_l-58Ltuj3UVyn0'
 
 f = open("running.txt", "w")
@@ -19,6 +19,24 @@ f.write("")
 f.close()
 API_ENDPOINT = 'https://canary.discord.com/api/v9'
 
+def remove_tracking(guild_id):
+    f = open("running.txt", "r")
+    ok = f.read().splitlines()
+    f.close()
+    f = open("running.txt", "w")
+    for i in ok:
+      if i != str(guild_id):
+        f.write(i + "\n")
+    f.close()
+    try:
+       os.remove(f"guilds/{guild_id}.txt")
+    except:
+        pass
+    try:
+       os.remove(f"guilds/{guild_id}-total.txt")
+    except:
+        pass
+    
 def update_join_count(guild_id, type:str):
   # return 0 
     filename = f"guilds/{guild_id}.txt"
@@ -75,6 +93,8 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
           return "perms error"
         else:
           print("[DEBUG]:", response.text)
+          em = Embed(title="Error", description=f"{response.text}\nGUILD: {guild_Id}", color=00000)
+          hook.send(embed=em)
         return "4xx-err"
       except:
         continue
@@ -88,22 +108,7 @@ def joiner(guild_id, key_type, start_from, amount):
                 count += 1
                 continue
             if count >= start_from + amount:
-                f = open("running.txt", "r")
-                ok = f.read().splitlines()
-                f.close()
-                f = open("running.txt", "w")
-                for i in ok:
-                  if i != str(guild_id):
-                    f.write(i + "\n")
-                f.close()
-                try:
-                   os.remove(f"guilds/{guild_id}.txt")
-                except:
-                    pass
-                try:
-                   os.remove(f"guilds/{guild_id}-total.txt")
-                except:
-                    pass
+                remove_tracking(guild_id)
                 break
             user_id, access_token, re = line.strip().split(':')
             ok = add_to_guild(access_token, user_id, guild_id, key_type)
@@ -113,14 +118,32 @@ def joiner(guild_id, key_type, start_from, amount):
               elif "already" in ok:
                 continue
               elif "perms error" in ok:
-                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nTYPE: {key_type}\nAMOUNTL {amount}", color=00000)
+                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nTYPE: {key_type}\nAMOUNT: {amount}", color=00000)
                 hook.send(embed=em)
                 print("bot removed")
+                remove_tracking(guild_id)
                 break
               elif "4xx-err" in ok: 
-                continue
+                remove_tracking(guild_id)
+                break
             except:
               pass
+        f = open("running.txt", "r")
+        ok = f.read().splitlines()
+        f.close()
+        f = open("running.txt", "w")
+        for i in ok:
+          if i != str(guild_id):
+            f.write(i + "\n")
+        f.close()
+        try:
+            os.remove(f"guilds/{guild_id}.txt")
+        except:
+            pass
+        try:
+            os.remove(f"guilds/{guild_id}-total.txt")
+        except:
+            pass
 
 
 
@@ -128,14 +151,20 @@ def joiner(guild_id, key_type, start_from, amount):
 
 @app.route('/')
 def home():
-    return jsonify({'discord': 'exploit#1337'}), 200
+    return jsonify({'discord': 'exploit1337'}), 200
 
 @app.route('/callback')
 def callback():
     try:
       code = request.args.get('code')
+      if code == None:
+         return jsonify({'error': 'No code provided'}), 400
       guild_id = request.args.get('guild_id')
-      key = request.args.get('state')  
+      if guild_id == None:
+          return jsonify({'error': 'No guild_id provided'}), 400
+      key = request.args.get('state') 
+      if key == None:
+          return jsonify({'error': 'No key provided'}), 400 
     except:
       return "error"
     ip = request.remote_addr
@@ -179,7 +208,8 @@ def callback():
             'type': key_type,
             'amount': amount,
             'status': 'success',
-            'guild': str(guild_id)
+            'guild': str(guild_id),
+            'creator': 'exploit1337'
         })
     except Exception as e:
         print(e)
