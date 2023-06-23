@@ -124,8 +124,8 @@ def joiner(guild_id, key_type, start_from, amount):
                 remove_tracking(guild_id)
                 break
               elif "4xx-err" in ok: 
-                remove_tracking(guild_id)
-                break
+                # remove_tracking(guild_id)
+                continue
             except:
               pass
         f = open("running.txt", "r")
