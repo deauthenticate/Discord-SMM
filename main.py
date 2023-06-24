@@ -93,14 +93,16 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
           return "perms error"
         else:
           print("[DEBUG]:", response.text)
-          em = Embed(title="Error", description=f"{response.text}\nGUILD: {guild_Id}", color=00000)
-          hook.send(embed=em)
         return "4xx-err"
       except:
         continue
 def joiner(guild_id, key_type, start_from, amount):
     with open(f'{key_type}.txt', 'r') as f:
+        total = 0 
+        success = 0 
+        failed = 0
         count = 0
+        already = 0
         line_no = 0 
         for line in f:
             line_no = 0 
@@ -110,41 +112,32 @@ def joiner(guild_id, key_type, start_from, amount):
             if count >= start_from + amount:
                 remove_tracking(guild_id)
                 break
+            total += 1
             user_id, access_token, re = line.strip().split(':')
             ok = add_to_guild(access_token, user_id, guild_id, key_type)
             try:
               if "200-ok" in ok:
                 count += 1
+                success += 1
               elif "already" in ok:
+                already += 1
                 continue
               elif "perms error" in ok:
-                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nTYPE: {key_type}\nAMOUNT: {amount}", color=00000)
+                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
                 hook.send(embed=em)
                 print("bot removed")
                 remove_tracking(guild_id)
                 break
               elif "4xx-err" in ok: 
+                failed += 1
                 # remove_tracking(guild_id)
                 continue
             except:
               pass
-        f = open("running.txt", "r")
-        ok = f.read().splitlines()
-        f.close()
-        f = open("running.txt", "w")
-        for i in ok:
-          if i != str(guild_id):
-            f.write(i + "\n")
-        f.close()
-        try:
-            os.remove(f"guilds/{guild_id}.txt")
-        except:
-            pass
-        try:
-            os.remove(f"guilds/{guild_id}-total.txt")
-        except:
-            pass
-
+        remove_tracking(guild_id)
+        em = Embed(title="Finished", description=f"Amount: `{amount}`\nGuild: `{guild_id}`\nTYPE: {key_type}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: `{already}`", color=00000)
+        hook.send(embed=em)
+        print(f"Finished {guild_id} {key_type} {amount}")
 
 
 
