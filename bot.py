@@ -5,8 +5,8 @@ import keygen
 
 api = "http://127.0.0.1:1337"
 tkn = "MTExOTUzODU2Mjk1ODg4ODk5MA.GqXI12.o2ZH4NEt1mJYidfHE4PdFjclvzGmVi6N9xz9mc"
-offline_token = 'MTEyMTM3MzA3MjI0Nzc3MTIwNg.GuknFw.fjlCbAGh4ofc_nJeBEz5wYVVIghr8MJQVJdWtA'
-online_token = 'MTExODQwOTgxODE2NDY5NTE3MA.GzOWCb.vhwqN71cotbF65ORxhm8yik_l-58Ltuj3UVyn0'
+offline_token = 'MTEyMTM3MzA3MjI0Nzc3MTIwNg.G1R8vH.VEVCGuJKM928UrcqYps7-JAKomhdLWG9Y-jXQU'
+online_token = 'MTEyMjA5MDM4MDQyNzUyNjE4NA.G0C-gM.pLlYD2TumVgf-pR7b7QQjfg4NeJ5strubkr4xc'
 
 client = commands.Bot(command_prefix=(["-", "."]), intents=discord.Intents.all())
 
@@ -90,8 +90,10 @@ async def generate(ctx, key_type:str, start:int, total:int, uses=None):
 async def redeem(ctx, key=None, server_id=None):
     if key == None or server_id == None:
         return await ctx.send("usage: .redeem <key> <server-id>")
-    url = f"http://5.249.163.196:1337/callback?code=ded&state={key}&guild_id={server_id}&permissions=1"
+    url = f"{api}/callback?code=ded&state={key}&guild_id={server_id}&permissions=1"
     r = requests.get(url)
+    if "success" not in r.json() and "invalid" not in r.json():
+        await ctx.message.delete()
     em = discord.Embed(description=f"{r.json()}", color=00000)
     return await ctx.send(embed=em)
 
@@ -130,40 +132,11 @@ async def leave(ctx, type:str, guild: str):
     if "exploit" not in ctx.author.name.lower():
         return await ctx.send("unauthorized")
     if type == "offline": 
-        f = open("running.txt", "r").read().splitlines()
-        with open("running.txt", "w") as f2:
-            for line in f:
-                line = line.strip()
-                if guild not in line:
-                    f2.write(line+"\n")
-        f2.close()
-        try:
-            os.remove("guilds/"+guild+".txt")
-        except:
-            pass
-        try:
-            os.remove("guilds/"+guild+"-total.txt")
-        except:
-            pass
+        # remove_tracking(guild)
         r = requests.delete("https://canary.discord.com/api/v9/users/@me/guilds/"+guild, headers={"Authorization": "Bot "+offline_token})
         em = discord.Embed(description=f"{r.json()}", color=00000)
         return await ctx.send(embed=em)
     elif type == "online":
-        f = open("running.txt", "r").read().splitlines()
-        with open("running.txt", "w") as f2:
-            for line in f:
-                line = line.strip()
-                if guild not in line:
-                    f2.write(line+"\n")
-        f2.close()
-        try:
-            os.remove("guilds/"+guild+".txt")
-        except:
-            pass
-        try:
-            os.remove("guilds/"+guild+"-total.txt")
-        except:
-            pass
         r = requests.delete("https://canary.discord.com/api/v9/users/@me/guilds/"+guild, headers={"Authorization": "Bot "+online_token})
         em = discord.Embed(description=f"{r.json()}", color=00000)
         return await ctx.send(embed=em)
