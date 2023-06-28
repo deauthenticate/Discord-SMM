@@ -140,7 +140,11 @@ async def leave(ctx, type:str, guild: str):
     if type == "offline": 
         # remove_tracking(guild)
         r = requests.delete("https://canary.discord.com/api/v9/users/@me/guilds/"+guild, headers={"Authorization": "Bot "+offline_token})
-        em = discord.Embed(description=f"{r.json()}", color=00000)
+        try:
+            jsonx = r.json()
+        except:
+            jsonx = ""
+        em = discord.Embed(description=f"{r.status_code0} | {jsonx}", color=00000)
         return await ctx.send(embed=em)
     elif type == "online":
         r = requests.delete("https://canary.discord.com/api/v9/users/@me/guilds/"+guild, headers={"Authorization": "Bot "+online_token})
