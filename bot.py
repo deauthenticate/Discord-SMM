@@ -21,7 +21,7 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         return
     em = discord.Embed(title="Error", description=f"```{error}```", color=00000)
-    await ctx.send(embed=em)
+    await ctx.send(embed=em, delete_after=5)
 
 @client.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
