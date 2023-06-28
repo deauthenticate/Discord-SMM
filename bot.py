@@ -35,7 +35,10 @@ async def status(ctx, guild_id= None):
         for guild in f:
             # print(type(guild))
             total = open("guilds/"+guild+"-total.txt", "r").read()
-            added = open("guilds/"+guild+".txt", "r").read()
+            try:
+                added = open("guilds/"+guild+".txt", "r").read()
+            except:
+                added = 0
             # print(total, added)
             remaining = int(total) - int(added)
             speed_per_minute = 60
@@ -57,7 +60,10 @@ async def status(ctx, guild_id= None):
                 return await ctx.send("No Running task found for guild: " + guild_id)
             else:
                 total = open("guilds/"+guild_id+"-total.txt", "r").read()
-                added = open("guilds/"+guild_id+".txt", "r").read()
+                try:
+                    added = open("guilds/"+guild+".txt", "r").read()
+                except:
+                    added = 0
                 remaining = int(total) - int(added)
                 speed_per_minute = 60
                 estimated_minutes = int(remaining) / speed_per_minute
