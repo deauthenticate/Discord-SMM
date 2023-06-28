@@ -147,6 +147,11 @@ async def leave(ctx, type:str, guild: str):
         em = discord.Embed(description=f"{r.status_code0} | {jsonx}", color=00000)
         return await ctx.send(embed=em)
     elif type == "online":
+        try:
+            jsonx = r.json()
+        except:
+            jsonx = ""
+        em = discord.Embed(description=f"{r.status_code0} | {jsonx}", color=00000)
         r = requests.delete("https://canary.discord.com/api/v9/users/@me/guilds/"+guild, headers={"Authorization": "Bot "+online_token})
         em = discord.Embed(description=f"{r.json()}", color=00000)
         return await ctx.send(embed=em)
