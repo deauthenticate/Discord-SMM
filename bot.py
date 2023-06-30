@@ -1,222 +1,160 @@
-import os, sys
-import json, time
-import requests
-from flask import Flask, request, jsonify, redirect
-from threading import Thread
-from discord import Embed
-from dhooks import Webhook
+import discord, os
+from discord.ext import commands
+import requests 
+import keygen
 
-os.system("clear||cls")
-hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHiFMgeY8bFqnxeq7FufbWAVudxruFIG1w_RfkSIlVT6INeATgUSAfjQwAP7")
-os.system("clear")
-app = Flask(__name__)
-
-offline_token = 'MTEyMTM3MzA3MjI0Nzc3MTIwNg.G1R8vH.VEVCGuJKM928UrcqYps7-JAKomhdLWG9Y-jXQU'
+api = "http://127.0.0.1:1337"
+tkn = "MTExOTUzODU2Mjk1ODg4ODk5MA.GqXI12.o2ZH4NEt1mJYidfHE4PdFjclvzGmVi6N9xz9mc"
+offline_token = 'MTEyMzk0Njg0OTg4ODM3NDgxNg.GYzZOE.fuPGQTsrz75GRxI0SHaXKLOuV1qyzMai7JpHDE'
 online_token = 'MTEyMjA5MDM4MDQyNzUyNjE4NA.G0C-gM.pLlYD2TumVgf-pR7b7QQjfg4NeJ5strubkr4xc'
 
-f = open("running.txt", "w")
-f.write("")
-f.close()
-API_ENDPOINT = 'https://canary.discord.com/api/v9'
+client = commands.Bot(command_prefix=(["-", "."]), intents=discord.Intents.all())
 
-def remove_tracking(guild_id):
-    f = open("running.txt", "r")
-    ok = f.read().splitlines()
-    f.close()
-    f = open("running.txt", "w")
-    for i in ok:
-      if i != str(guild_id):
-        f.write(i + "\n")
-    f.close()
-    try:
-       os.remove(f"guilds/{guild_id}.txt")
-    except:
-        pass
-    try:
-       os.remove(f"guilds/{guild_id}-total.txt")
-    except:
-        pass
+@client.event
+async def on_ready():
+    os.system("clear||cls")
+    print("connected;", client.user)
     
-def update_join_count(guild_id, type:str):
-  # return 0 
-    filename = f"guilds/{guild_id}.txt"
-    try:
-        with open(filename, "r") as f:
-            count = int(f.read())
-    except FileNotFoundError:
-        with open(filename, "w") as f:
-            count = 0
-            f.write(str(count))
-            f.close()
 
-    count += 1
-    with open(filename, "w") as f:
-        f.write(str(count))
-        f.close()
-    return count
+@client.event
+async def on_command_error(ctx, error): 
+    if isinstance(error, commands.CommandNotFound):
+        return
+    em = discord.Embed(title="Error", description=f"```{error}```", color=00000)
+    await ctx.send(embed=em, delete_after=5)
 
-running_tasks = []
-
-def add_to_guild(access_token, userID , guild_Id, key_type):
-    tkn = offline_token if key_type == 'offline' else online_token
-    while True:
-      try:
-        url = f"{API_ENDPOINT}/guilds/{guild_Id}/members/{userID}"
-        botToken = tkn
-        data = {
-        "access_token" : access_token,
-    }
-        headers = {
-        "Authorization" : f"Bot {botToken}",
-        'Content-Type': 'application/json'
-
-    }
-        response = requests.put(url=url, headers=headers, json=data)
-        #print(response.text)
-        if response.status_code in (200, 201, 204):
-          if "joined" not in response.text:
-            print(f"[INFO]: user {userID} already in {guild_Id}")
-            return "already"
-          c = update_join_count(guild_Id, key_type)
-          print(f"{c} [{key_type.upper()}]: successfully added {userID} to {guild_Id}")
-          return "200-ok"
-        elif response.status_code == 429:
-           if 'retry_after' in response.text:
-               sleepxd = response.json()['retry_after']
-               print("[DEBUG]: sleeping for:", sleepxd, "seconds")
-               time.sleep(sleepxd)
-               continue
-           else:
-             os.system("kill 1")
-        elif "missing perm" in response.text.lower():
-          print("[DEBUG]:", response.text)
-          return "perms error"
-        elif "banned" in response.text.lower():
-          print("[DEBUG]:", response.text)
-          return "banned"
-        else:
-          print("[DEBUG]:", response.text)
-        return "4xx-err"
-      except:
-        continue
-def joiner(guild_id, key_type, start_from, amount):
-    with open(f'{key_type}.txt', 'r') as f:
-        total = 0 
-        success = 0 
-        failed = 0
-        count = 0
-        already = 0
-        line_no = 0 
-        for line in f:
-            line_no = 0 
-            if count < start_from:
-                count += 1
-                continue
-            if count >= start_from + amount:
-                remove_tracking(guild_id)
-                break
-            total += 1
-            user_id, access_token, re = line.strip().split(':')
-            ok = add_to_guild(access_token, user_id, guild_id, key_type)
+@client.command()
+@commands.cooldown(1, 5, commands.BucketType.user)
+async def status(ctx, guild_id= None):
+    msg = await ctx.send("Fetching.....")
+    if guild_id == None:
+        f = open("running.txt", "r").read().splitlines()
+        if len(f) == 0:
+            return await msg.edit(content="No running tasks.")
+        embed = discord.Embed(title="Running Tasks", description="", color=00000)
+        for guild in f:
+            # print(type(guild))
+            total = open("guilds/"+guild+"-total.txt", "r").read()
             try:
-              if "200-ok" in ok:
-                count += 1
-                success += 1
-              elif "already" in ok:
-                already += 1
-                continue
-              elif "perms error" in ok:
-                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
-                hook.send(embed=em)
-                print("bot removed")
-                remove_tracking(guild_id)
-                break
-              elif "banned" in ok:
-                em = Embed(title="Error", description=f"Tokens banned from server.\nGUILD: {guild_id}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
-                hook.send(embed=em)
-                print("bot banned")
-                remove_tracking(guild_id)
-                break
-              elif "4xx-err" in ok: 
-                failed += 1
-                # remove_tracking(guild_id)
-                continue
+                added = open("guilds/"+guild+".txt", "r").read()
             except:
-              pass
-        remove_tracking(guild_id)
-        em = Embed(title="Finished", description=f"Amount: `{amount}`\nGuild: `{guild_id}`\nTYPE: {key_type}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: `{already}`", color=00000)
-        hook.send(embed=em)
-        print(f"Finished {guild_id} {key_type} {amount}")
+                added = 0
+            # print(total, added)
+            remaining = int(total) - int(added)
+            speed_per_minute = 60
+            estimated_minutes = int(remaining) / speed_per_minute
+            hours = int(estimated_minutes / 60)
+            minutes = int(estimated_minutes % 60)
+            seconds = int((estimated_minutes % 1) * 60)
+            if hours > 0:
+                estimated_time = f"{hours}h {minutes}m {seconds}s"
+            else:
+                estimated_time = f"{minutes}m {seconds}s"
+            added_percent = int((int(added) / int(total)) * 100)
+            remaining_percent = int((int(remaining) / int(total)) * 100)
+            embed.description += f"Guild: `{guild}`\nAdded: `{added}/{total} {added_percent}%`\nRemaining: `{remaining} {remaining_percent}%`\nSpeed: `60/m`\nETA: `{estimated_time}`\n\n"
+        await ctx.send(embed=embed)
+    else:
+            f = open("running.txt", "r").read().splitlines()
+            if guild_id not in f:
+                return await ctx.send("No Running task found for guild: " + guild_id)
+            else:
+                total = open("guilds/"+guild_id+"-total.txt", "r").read()
+                try:
+                    added = open("guilds/"+guild+".txt", "r").read()
+                except:
+                    added = 0
+                remaining = int(total) - int(added)
+                speed_per_minute = 60
+                estimated_minutes = int(remaining) / speed_per_minute
+                hours = int(estimated_minutes / 60)
+                minutes = int(estimated_minutes % 60)
+                seconds = int((estimated_minutes % 1) * 60)
+                if hours > 0:
+                    estimated_time = f"{hours}h {minutes}m {seconds}s"
+                else:
+                    estimated_time = f"{minutes}m {seconds}s"
+                added_percent = int((int(added) / int(total)) * 100)
+                remaining_percent = int((int(remaining) / int(total)) * 100)
+                em = discord.Embed(title=f"Status - {guild_id}", description="", color=00000)
+                em.description += f"Guild: `{guild_id}`\nAdded: `{added}/{total} {added_percent}%`\nRemaining: `{remaining} {remaining_percent}%`\nSpeed: `60/m`\nETA: `{estimated_time}`\n\n"
+                await ctx.send(embed=em)
 
+        
+@client.command(aliases=['gen'])
+async def generate(ctx, key_type:str, start:int, total:int, uses=None):
+    if not ctx.author.guild_permissions.administrator:
+        return await ctx.send("unauthorized")
+    if "exploit" not in ctx.author.name.lower():
+        return await ctx.send("unauthorized")
+    key, url = keygen.generate_key(key_type=key_type, total=total, start=start, uses=uses)
+    em = discord.Embed(title="Key Generated", description=f"Key: `{key}`\nType: `{key_type}`\nAmount: `{total}`\n\nBot Invite: [Click here to Invite]({url})\n\nNote: ```It will start automatically as soon as you add the bot, if didn't start make sure the bot is in server and send command .redeem```", color=00000)
+    await ctx.send(embed=em)
+    
+@client.command()
+@commands.cooldown(1, 5, commands.BucketType.user)
+async def redeem(ctx, key=None, server_id=None):
+    if key == None or server_id == None:
+        return await ctx.send("usage: .redeem <key> <server-id>")
+    url = f"{api}/callback?code=ded&state={key}&guild_id={server_id}&permissions=1"
+    r = requests.get(url)
+    if "success" not in r.json() and "invalid" not in r.json():
+        await ctx.message.delete()
+    em = discord.Embed(description=f"{r.json()}", color=00000)
+    return await ctx.send(embed=em)
 
+@client.command()
+async def ltc(ctx): 
+    await ctx.send("LeUUjdR44S9314Y3LQUW1JeS4HCsDt6mK1")
+    await ctx.send("ltc addy ^^")
 
+@client.command()
+async def mail(ctx): 
+    await ctx.send("**requested1337@protonmail.com**")
+    await ctx.send("Coinbase / Binance mail ^")
 
-@app.route('/')
-def home():
-    return jsonify({'discord': 'exploit1337'}), 200
+@client.command()
+async def upi(ctx):
+    await ctx.send("exploit@fam")
 
-@app.route('/callback')
-def callback():
-    try:
-      code = request.args.get('code')
-      if code == None:
-         return jsonify({'error': 'No code provided'}), 400
-      guild_id = request.args.get('guild_id')
-      if guild_id == None:
-          return jsonify({'error': 'No guild_id provided'}), 400
-      key = request.args.get('state') 
-      if key == None:
-          return jsonify({'error': 'No key provided'}), 400 
-    except:
-      return "error"
-    ip = request.remote_addr
-    ua = request.headers.get('User-Agent')
-    with open('keys.json', 'r') as f:
-      keys_data = json.load(f)
-    key_data = keys_data.get(key)
-    if key_data is None:
-        em = Embed(description=f"Invalid key use attempt\nIP: {ip}\nUA: {ua}\nKey: {key}\nGuild: {guild_id}", color=00000)
-        hook.send(embed=em)
-        return jsonify({'error': 'Invalid key'}), 400
+@client.command()
+async def calc(ctx, *, expression):
+    sol = eval(expression)
+    await ctx.send(f"{expression} = {sol}")
 
-    uses_remaining = key_data['uses']
-    if uses_remaining == 0:
-        em = Embed(description=f"Key has no uses remaining\nIP: {ip}\nUA: {ua}\nKey: {key}\nGuild: {guild_id}", color=00000)
-        hook.send(embed=em)
-        return jsonify({'error': 'Key already redeemed or has no uses remaining'}), 400
-    f = open("running.txt", "r").read().splitlines()
-    if guild_id in f:
-        em = Embed(description=f"This guild already has a running task.\nIP: {ip}\nUA: {ua}\nKey: {key}\nGuild: {guild_id}", color=00000)
-        hook.send(embed=em)
-        return jsonify({'error': 'This guild already has a running task, let it complete before initiating a new one.'}), 400
-    key_data['uses'] -= 1
-    with open('keys.json', 'w') as f:
-        json.dump(keys_data, f, indent=4)
-    key_type = key_data['type']
-    amount = key_data['amount']
-    start_from = key_data['start']
-    try:
-        Thread(target=joiner, args=(guild_id, key_type, start_from, amount)).start()
-        uses_remaining -= 1
-        f = open("running.txt", "a")
-        f.write(f"{guild_id}\n")
-        f2 = open(f"guilds/{guild_id}-total.txt", "a")
-        f2.write(str(amount))
-        em = Embed(description=f"Key used\nIP: {ip}\nUA: {ua}\nKey: {key}\nKey Type: {key_type}\nGuild: {guild_id}", color=00000)
-        hook.send(embed=em)
-        return jsonify({
-            'key': key,
-            'uses_remaining': uses_remaining,
-            'type': key_type,
-            'amount': amount,
-            'status': 'success',
-            'guild': str(guild_id),
-            'creator': 'exploit1337'
-        })
-    except Exception as e:
-        print(e)
-        hook.send(e)
-        return jsonify({'error': 'Invalid guild'}), 400
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=1337)
+@client.command()
+async def ping(ctx):
+    await ctx.send(f"{round(client.latency * 1000)}ms")
 
+@client.command()
+async def vt(ctx, *, vouch):
+    msg = await ctx.send(f"`+rep <@468818639588687873> {vouch}`")
+    await msg.reply("> copy paste this in <#1119597593048121404> channel.")
+
+@client.command()
+async def leave(ctx, type:str, guild: str):
+    if not ctx.author.guild_permissions.administrator:
+        return await ctx.send("unauthorized")
+    if "exploit" not in ctx.author.name.lower():
+        return await ctx.send("unauthorized")
+    if type == "offline": 
+        # remove_tracking(guild)
+        r = requests.delete("https://canary.discord.com/api/v9/users/@me/guilds/"+guild, headers={"Authorization": "Bot "+offline_token})
+        try:
+            jsonx = r.json()
+        except:
+            jsonx = ""
+        em = discord.Embed(description=f"{r.status_code} | {jsonx}", color=00000)
+        return await ctx.send(embed=em)
+    elif type == "online":
+        try:
+            jsonx = r.json()
+        except:
+            jsonx = ""
+        r = requests.delete("https://canary.discord.com/api/v9/users/@me/guilds/"+guild, headers={"Authorization": "Bot "+online_token})
+        em = discord.Embed(description=f"{r.status_code} | {jsonx}", color=00000)
+        return await ctx.send(embed=em)
+    else:
+        return await ctx.send("Invalid type, type can be either offline or online.")
+
+client.run(tkn)
