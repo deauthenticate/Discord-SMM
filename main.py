@@ -150,6 +150,7 @@ def joiner(guild_id, key_type, start_from, amount):
     members = get_members(tkn, guild_id)
     if members != None:
         member_count = len(members)
+        print("member count:", member_count)
     with open(f'{key_type}.txt', 'r') as f:
         total = 0 
         success = 0 
