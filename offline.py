@@ -9,9 +9,63 @@ API_ENDPOINT = 'https://canary.discord.com/api/v9'
 CLIENT_ID = '1089980309799444550'
 CLIENT_SECRET = ""
 REDIRECT_URI = 'https://verify.exploit.tk'
-tkn = "MTExODA2NzYzNDU4ODYxNDY4Ng.G1krKC.0ZRj486HoCkdZspXFUSG8RbrttkC-drPnbbtN4"
+tkn = "MTEyMzk0Njg0OTg4ODM3NDgxNg.GYzZOE.fuPGQTsrz75GRxI0SHaXKLOuV1qyzMai7JpHDE"
 
+def get_members(guild_id):
+    scraped = False
+    url = f'https://canary.discord.com/api/v9/guilds/{guild_id}/members'
+    headers = {
+        'Authorization': f'Bot {tkn}'
+    }
+
+    members = []
+    member_ids = []
+    params = {
+        'limit': 1000
+    }
+
+    while True:
+        response = requests.get(url, headers=headers, params=params)
+
+        if response.status_code == 200:
+            new_members = json.loads(response.text)
+            members.extend(new_members)
+
+            if len(new_members) < 1000:
+                scraped = True
+                break
+            elif response.status_code == 429:
+               if 'retry_after' in response.text:
+                    sleep = response.json()['retry_after']
+                    print("[DEBUG]: sleeping for:", sleep, "seconds")
+                    time.sleep(sleep)
+                    continue
+               else:
+                    break
+            else:
+                params['after'] = new_members[-1]['user']['id']
+        else:
+            print(f"Failed to retrieve guild members. Error: {response.text}")
+            break
+    
+    if scraped:
+        for member in members:
+            member_ids.append(member['user']['id'])
+
+        return member_ids
+    else:
+        return None
+  
+guild = input("guild: ")
+
+starter = int(input("start from: "))
+amount = input("amount: ")
+
+members = get_members(guild)
 def add_to_guild(access_token, userID , guild_Id, added):
+    if userID in members:
+        print(f"{added} [INFO]: user {userID} already in {guild_Id}")
+        return "fail"
     while True:
         url = f"{API_ENDPOINT}/guilds/{guild_Id}/members/{userID}"
 
@@ -47,10 +101,7 @@ def add_to_guild(access_token, userID , guild_Id, added):
            return "fail"
         break
 f = open("offline.txt", "r").readlines()
-guild = input("guild: ")
 
-starter = int(input("start from: "))
-amount = input("amount: ")
 if "all" in amount.lower():
   amount = int(len(open("offline.txt", "r").readlines()))
 else:
