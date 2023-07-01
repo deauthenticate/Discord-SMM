@@ -11,8 +11,8 @@ hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHi
 os.system("clear")
 app = Flask(__name__)
 
-offline_token = 'MTEyMTM3MzA3MjI0Nzc3MTIwNg.GuknFw.fjlCbAGh4ofc_nJeBEz5wYVVIghr8MJQVJdWtA'
-online_token = 'MTExODQwOTgxODE2NDY5NTE3MA.GzOWCb.vhwqN71cotbF65ORxhm8yik_l-58Ltuj3UVyn0'
+offline_token = 'MTEyMzk0Njg0OTg4ODM3NDgxNg.GYzZOE.fuPGQTsrz75GRxI0SHaXKLOuV1qyzMai7JpHDE'
+online_token = 'MTEyNDU5NTQ1Njg0NTAyNTI5MA.GWX94u._rCgskQwWF9juoyK9I_1SxVpaoJ_9vwD8c0jDo'
 
 f = open("running.txt", "w")
 f.write("")
@@ -91,12 +91,65 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
         elif "missing perm" in response.text.lower():
           print("[DEBUG]:", response.text)
           return "perms error"
+        elif "banned" in response.text.lower():
+          print("[DEBUG]:", response.text)
+          return "banned"
         else:
           print("[DEBUG]:", response.text)
         return "4xx-err"
       except:
         continue
+      
+def get_members(token, guild_id):
+    scraped = False
+    url = f'https://canary.discord.com/api/v9/guilds/{guild_id}/members'
+    headers = {
+        'Authorization': f'Bot {token}'
+    }
+
+    members = []
+    member_ids = []
+    params = {
+        'limit': 1000
+    }
+
+    while True:
+        response = requests.get(url, headers=headers, params=params)
+
+        if response.status_code == 200:
+            new_members = json.loads(response.text)
+            members.extend(new_members)
+
+            if len(new_members) < 1000:
+                scraped = True
+                break
+            elif response.status_code == 429:
+               if 'retry_after' in response.text:
+                    sleep = response.json()['retry_after']
+                    print("[DEBUG]: sleeping for:", sleep, "seconds")
+                    time.sleep(sleep)
+                    continue
+               else:
+                    break
+            else:
+                params['after'] = new_members[-1]['user']['id']
+        else:
+            print(f"Failed to retrieve guild members. Error: {response.text}")
+            break
+    
+    if scraped:
+        for member in members:
+            member_ids.append(member['user']['id'])
+
+        return member_ids
+    else:
+        return None
+
 def joiner(guild_id, key_type, start_from, amount):
+    tkn = offline_token if key_type == 'offline' else online_token
+    members = get_members(tkn, guild_id)
+    if members != None:
+        member_count = len(members)
     with open(f'{key_type}.txt', 'r') as f:
         total = 0 
         success = 0 
@@ -114,6 +167,11 @@ def joiner(guild_id, key_type, start_from, amount):
                 break
             total += 1
             user_id, access_token, re = line.strip().split(':')
+            if members != None:
+                if user_id in members:
+                    print(f"{count} [{key_type.upper()}]: {user_id} already in {guild_id}")
+                    already += 1
+                    continue
             ok = add_to_guild(access_token, user_id, guild_id, key_type)
             try:
               if "200-ok" in ok:
@@ -123,9 +181,15 @@ def joiner(guild_id, key_type, start_from, amount):
                 already += 1
                 continue
               elif "perms error" in ok:
-                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
+                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
                 hook.send(embed=em)
                 print("bot removed")
+                remove_tracking(guild_id)
+                break
+              elif "banned" in ok:
+                em = Embed(title="Error", description=f"Tokens banned from server.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
+                hook.send(embed=em)
+                print("bot banned")
                 remove_tracking(guild_id)
                 break
               elif "4xx-err" in ok: 
@@ -135,7 +199,7 @@ def joiner(guild_id, key_type, start_from, amount):
             except:
               pass
         remove_tracking(guild_id)
-        em = Embed(title="Finished", description=f"Amount: `{amount}`\nGuild: `{guild_id}`\nTYPE: {key_type}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: `{already}`", color=00000)
+        em = Embed(title="Finished", description=f"Amount: `{amount}`\nGuild: `{guild_id}`\nMember Count: {member_count}\nTYPE: {key_type}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: `{already}`", color=00000)
         hook.send(embed=em)
         print(f"Finished {guild_id} {key_type} {amount}")
 
