@@ -11,7 +11,7 @@ hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHi
 os.system("clear")
 app = Flask(__name__)
 
-offline_token = 'MTEyMzk0Njg0OTg4ODM3NDgxNg.GYzZOE.fuPGQTsrz75GRxI0SHaXKLOuV1qyzMai7JpHDE'
+offline_token = 'MTEyNDk5Mzc3NDg4NDUwMzU5Mg.G9JAv4.sUnoEiUjlQKl-7Hu37VVy7risFb7qj40EI1szU'
 online_token = 'MTEyNDU5NTQ1Njg0NTAyNTI5MA.GWX94u._rCgskQwWF9juoyK9I_1SxVpaoJ_9vwD8c0jDo'
 
 f = open("running.txt", "w")
@@ -57,6 +57,29 @@ def update_join_count(guild_id, type:str):
 
 running_tasks = []
 
+def remove_auth(type, id):
+    if type == "online":
+        f = open("online.txt", "r")
+        ok = f.read().splitlines()
+        f.close()
+        f = open("online.txt", "w")
+        for i in ok:
+            if id not in str(i):
+                f.write(i + "\n")
+        f.close()
+    elif type == "offline":
+        f = open("offline.txt", "r")
+        ok = f.read().splitlines()
+        f.close()
+        f = open("offline.txt", "w")
+        for i in ok:
+            if id not in str(i):
+                f.write(i + "\n")
+        f.close()
+    else:
+        print("Unknown type")
+    print(f"Removed {id} from {type} list")
+   
 def add_to_guild(access_token, userID , guild_Id, key_type):
     tkn = offline_token if key_type == 'offline' else online_token
     while True:
@@ -94,8 +117,12 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
         elif "banned" in response.text.lower():
           print("[DEBUG]:", response.text)
           return "banned"
+        elif "unknown guild" in response.text.lower():
+           return "unknown guild"
         else:
           print("[DEBUG]:", response.text)
+          if "verified" in response.text.lower() or "unknown user" in response.text.lower():
+            remove_auth(key_type, userID)
         return "4xx-err"
       except:
         continue
@@ -123,7 +150,9 @@ def get_members(token, guild_id):
             if len(new_members) < 1000:
                 scraped = True
                 break
-            elif response.status_code == 429:
+            else:
+                params['after'] = new_members[-1]['user']['id']
+        elif response.status_code == 429:
                if 'retry_after' in response.text:
                     sleep = response.json()['retry_after']
                     print("[DEBUG]: sleeping for:", sleep, "seconds")
@@ -131,8 +160,6 @@ def get_members(token, guild_id):
                     continue
                else:
                     break
-            else:
-                params['after'] = new_members[-1]['user']['id']
         else:
             print(f"Failed to retrieve guild members. Error: {response.text}")
             break
@@ -191,6 +218,12 @@ def joiner(guild_id, key_type, start_from, amount):
                 em = Embed(title="Error", description=f"Tokens banned from server.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
                 hook.send(embed=em)
                 print("bot banned")
+                remove_tracking(guild_id)
+                break
+              elif "unknown guild" in ok:
+                em = Embed(title="Error", description=f"Unknown guild.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
+                hook.send(embed=em)
+                print("unknown guild")
                 remove_tracking(guild_id)
                 break
               elif "4xx-err" in ok: 
