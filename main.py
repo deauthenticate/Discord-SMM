@@ -121,7 +121,7 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
            return "unknown guild"
         else:
           print("[DEBUG]:", response.text)
-          if "verified" in response.text.lower() or "unknown user" in response.text.lower():
+          if "verified" in response.text.lower() or "unknown user" in response.text.lower() or "100" in response.text.lower():
             remove_auth(key_type, userID)
         return "4xx-err"
       except:
