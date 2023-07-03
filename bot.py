@@ -94,12 +94,11 @@ async def generate(ctx, key_type:str, start:int, total:int, uses=None):
 @client.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
 async def redeem(ctx, key=None, server_id=None):
+    await ctx.message.delete()
     if key == None or server_id == None:
         return await ctx.send("usage: .redeem <key> <server-id>")
     url = f"{api}/callback?code=ded&state={key}&guild_id={server_id}&permissions=1"
     r = requests.get(url)
-    if "success" not in r.json() and "invalid" not in r.json():
-        await ctx.message.delete()
     em = discord.Embed(description=f"{r.json()}", color=00000)
     return await ctx.send(embed=em)
 
