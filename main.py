@@ -78,7 +78,7 @@ def remove_auth(type, id):
         f.close()
     else:
         print("Unknown type")
-    print(f"Removed {id} from {type} list")
+    print(f"[DEBUG]: Removed {id} from {type} list")
    
 def add_to_guild(access_token, userID , guild_Id, key_type):
     tkn = offline_token if key_type == 'offline' else online_token
@@ -118,6 +118,7 @@ def add_to_guild(access_token, userID , guild_Id, key_type):
           print("[DEBUG]:", response.text)
           return "banned"
         elif "unknown guild" in response.text.lower():
+           print("[DEBUG]:", response.text)
            return "unknown guild"
         else:
           print("[DEBUG]:", response.text)
@@ -161,7 +162,7 @@ def get_members(token, guild_id):
                else:
                     break
         else:
-            print(f"Failed to retrieve guild members. Error: {response.text}")
+            print(f"[DEBUG]: Failed to retrieve guild members. Error: {response.text}")
             break
     
     if scraped:
@@ -186,7 +187,7 @@ def joiner(guild_id, key_type, start_from, amount):
         already = 0
         line_no = 0 
         for line in f:
-            line_no = 0 
+            line_no += 1 
             if count < start_from:
                 count += 1
                 continue
@@ -194,7 +195,11 @@ def joiner(guild_id, key_type, start_from, amount):
                 remove_tracking(guild_id)
                 break
             total += 1
-            user_id, access_token, re = line.strip().split(':')
+            try:
+                user_id, access_token, re = line.strip().split(':')
+            except:
+                print(f"[DEBUG]: Failed to split line {line_no}")
+                continue
             if members != None:
                 if user_id in members:
                     print(f"{count} [{key_type.upper()}]: {user_id} already in {guild_id}")
@@ -209,19 +214,19 @@ def joiner(guild_id, key_type, start_from, amount):
                 already += 1
                 continue
               elif "perms error" in ok:
-                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
+                em = Embed(title="Error", description=f"Bot removed from server / is timedout or dosen't have invite permission.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {line_no}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
                 hook.send(embed=em)
                 print("bot removed")
                 remove_tracking(guild_id)
                 break
               elif "banned" in ok:
-                em = Embed(title="Error", description=f"Tokens banned from server.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
+                em = Embed(title="Error", description=f"Tokens banned from server.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {line_no}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
                 hook.send(embed=em)
                 print("bot banned")
                 remove_tracking(guild_id)
                 break
               elif "unknown guild" in ok:
-                em = Embed(title="Error", description=f"Unknown guild.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
+                em = Embed(title="Error", description=f"Unknown guild.\nGUILD: {guild_id}\nMember Count: {member_count}\nTYPE: {key_type}\nAMOUNT: {amount}\nLine Count: {line_no}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: {already}", color=00000)
                 hook.send(embed=em)
                 print("unknown guild")
                 remove_tracking(guild_id)
@@ -233,7 +238,7 @@ def joiner(guild_id, key_type, start_from, amount):
             except:
               pass
         remove_tracking(guild_id)
-        em = Embed(title="Finished", description=f"Amount: `{amount}`\nGuild: `{guild_id}`\nMember Count: {member_count}\nTYPE: {key_type}\nLine Count: {count}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: `{already}`", color=00000)
+        em = Embed(title="Finished", description=f"Amount: `{amount}`\nGuild: `{guild_id}`\nMember Count: {member_count}\nTYPE: {key_type}\nLine Count: {line_no}\nTotal Requests: {total}\nSuccess: {success}\nFailed: {failed}\nAlready in server: `{already}`", color=00000)
         hook.send(embed=em)
         print(f"Finished {guild_id} {key_type} {amount}")
 
@@ -306,6 +311,7 @@ def callback():
         print(e)
         hook.send(e)
         return jsonify({'error': 'Invalid guild'}), 400
+  
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337)
 
