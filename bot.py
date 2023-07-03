@@ -5,8 +5,8 @@ import keygen
 
 api = "http://127.0.0.1:1337"
 tkn = "MTExOTUzODU2Mjk1ODg4ODk5MA.GqXI12.o2ZH4NEt1mJYidfHE4PdFjclvzGmVi6N9xz9mc"
-offline_token = 'MTEyMzk0Njg0OTg4ODM3NDgxNg.GYzZOE.fuPGQTsrz75GRxI0SHaXKLOuV1qyzMai7JpHDE'
-online_token = 'MTEyMjA5MDM4MDQyNzUyNjE4NA.G0C-gM.pLlYD2TumVgf-pR7b7QQjfg4NeJ5strubkr4xc'
+offline_token = 'MTEyNDk5Mzc3NDg4NDUwMzU5Mg.G9JAv4.sUnoEiUjlQKl-7Hu37VVy7risFb7qj40EI1szU'
+online_token = 'MTEyNDU5NTQ1Njg0NTAyNTI5MA.GWX94u._rCgskQwWF9juoyK9I_1SxVpaoJ_9vwD8c0jDo'
 
 client = commands.Bot(command_prefix=(["-", "."]), intents=discord.Intents.all())
 
@@ -157,4 +157,11 @@ async def leave(ctx, type:str, guild: str):
     else:
         return await ctx.send("Invalid type, type can be either offline or online.")
 
+@client.command()
+@commands.cooldown(1, 5, commands.BucketType.user)
+async def stock(ctx):
+    offline = open("offline.txt", "r").read().splitlines()
+    online = open("online.txt", "r").read().splitlines()
+    em = discord.Embed(title="Stock", description=f"Offline: `{len(offline)}`\nOnline: `{len(online)}`", color=00000)
+    await ctx.send(embed=em)
 client.run(tkn)
