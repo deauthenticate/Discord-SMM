@@ -11,8 +11,12 @@ hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHi
 os.system("clear")
 app = Flask(__name__)
 
-offline_token = 'MTEyNDk5Mzc3NDg4NDUwMzU5Mg.G9JAv4.sUnoEiUjlQKl-7Hu37VVy7risFb7qj40EI1szU'
-online_token = 'MTEyNDU5NTQ1Njg0NTAyNTI5MA.GWX94u._rCgskQwWF9juoyK9I_1SxVpaoJ_9vwD8c0jDo'
+with open('config.json', 'r') as f:
+    config = json.load(f)
+
+offline_token = config['offline_token']
+online_token = config['online_token']
+
 
 f = open("running.txt", "w")
 f.write("")

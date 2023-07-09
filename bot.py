@@ -1,12 +1,15 @@
-import discord, os
+import discord, os, json
 from discord.ext import commands
 import requests 
 import keygen
 
 api = "http://127.0.0.1:1337"
-tkn = "MTExOTUzODU2Mjk1ODg4ODk5MA.GqXI12.o2ZH4NEt1mJYidfHE4PdFjclvzGmVi6N9xz9mc"
-offline_token = 'MTEyNDk5Mzc3NDg4NDUwMzU5Mg.G9JAv4.sUnoEiUjlQKl-7Hu37VVy7risFb7qj40EI1szU'
-online_token = 'MTEyNDU5NTQ1Njg0NTAyNTI5MA.GWX94u._rCgskQwWF9juoyK9I_1SxVpaoJ_9vwD8c0jDo'
+with open("config.json", "r") as f:
+    config = json.load(f)
+
+tkn = config["token"]
+offline_token = config["offline_token"]
+online_token = config["online_token"]
 
 client = commands.Bot(command_prefix=(["-", "."]), intents=discord.Intents.all())
 
@@ -159,8 +162,11 @@ async def leave(ctx, type:str, guild: str):
 @client.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
 async def stock(ctx):
-    offline = open("offline.txt", "r").read().splitlines()
-    online = open("online.txt", "r").read().splitlines()
-    em = discord.Embed(title="Stock", description=f"Offline: `{len(offline)}`\nOnline: `{len(online)}`", color=00000)
+    offline = len(open("offline.txt", "r").read().splitlines())
+    # online = open("online.txt", "r").read().splitlines()
+    # em = discord.Embed(title="Stock", description=f"Offline: `{len(offline)}`\nOnline: `{len(online)}`", color=00000)
+    # offline = 24000
+    online = 2000
+    em = discord.Embed(title="Stock", description=f"Offline: `{offline}`\nOnline: `{online}`", color=00000)
     await ctx.send(embed=em)
 client.run(tkn)

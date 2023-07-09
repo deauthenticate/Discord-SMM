@@ -4,9 +4,14 @@ import string
 import json
 from dhooks import Webhook
 hook = Webhook("https://discord.com/api/webhooks/1118083019614453870/8qzbD7DMP9ntp6rS-qeO3UpkMcV7xglrS3A-AG8vIhs_NLLuWj3d5O1sP8g0gSdYSDtp")
-offline_client_id = "1118067634588614686"
-online_client_id = "1118409818164695170"
-redirect_uri = 'http://5.249.163.196:1337/callback'
+
+with open('config.json', 'r') as f:
+    config = json.load(f)
+
+offline_client_id = config['offline_client_id']
+online_client_id = config['online_client_id']
+redirect_uri = config['handshake']
+
 
 # if len(sys.argv) < 5:
 #     print('Usage: python generator.py type start total [uses]')
