@@ -278,6 +278,9 @@ def callback():
         return jsonify({'error': 'Invalid key'}), 400
 
     uses_remaining = key_data['uses']
+    key_type = key_data['type']
+    tkn = offline_token if key_type == 'offline' else online_token
+    headers = {"Authorization": f"Bot {tkn}"}
     if uses_remaining == 0:
         em = Embed(description=f"Key has no uses remaining\nIP: {ip}\nUA: {ua}\nKey: {key}\nGuild: {guild_id}", color=00000)
         hook.send(embed=em)
@@ -287,6 +290,10 @@ def callback():
         em = Embed(description=f"This guild already has a running task.\nIP: {ip}\nUA: {ua}\nKey: {key}\nGuild: {guild_id}", color=00000)
         hook.send(embed=em)
         return jsonify({'error': 'This guild already has a running task, let it complete before initiating a new one.'}), 400
+    time.sleep(0.3)
+    r = requests.get("https://canary.discord.com/api/v9/guilds/%s" % guild_id, headers=headers)
+    if "unknown guild" in r.text.lower() and guild_id not in r.text.lower():
+        return jsonify({'error': 'bot removed from server'}), 400
     key_data['uses'] -= 1
     with open('keys.json', 'w') as f:
         json.dump(keys_data, f, indent=4)
