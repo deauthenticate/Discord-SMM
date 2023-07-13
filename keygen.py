@@ -3,7 +3,7 @@ import random
 import string
 import json
 from dhooks import Webhook
-hook = Webhook("https://discord.com/api/webhooks/1118083019614453870/8qzbD7DMP9ntp6rS-qeO3UpkMcV7xglrS3A-AG8vIhs_NLLuWj3d5O1sP8g0gSdYSDtp")
+hook = Webhook("https://ptb.discord.com/api/webhooks/1129095950758068304/bmynBB9s12jaqR_qgRmiPmQA1cQwtc-FEdcIGiT1wxBXPVyH9R2IgcOcZTax5Bu4oJZp")
 
 with open('config.json', 'r') as f:
     config = json.load(f)

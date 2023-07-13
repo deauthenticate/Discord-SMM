@@ -1,8 +1,8 @@
 {
-    "token": "MTExOTUzODU2Mjk1ODg4ODk5MA.GqXI12.o2ZH4NEt1mJYidfHE4PdFjclvzGmVi6N9xz9mc",
-    "offline_client_id": "1127481853272662056",
-    "online_client_id": "1127510069215494224",
-    "offline_token": "MTEyNzQ4MTg1MzI3MjY2MjA1Ng.G-toAe.tyxbS6uO6eC9ynxNhxurnvo9x6nOZEED3DJEhg",
-    "online_token": "MTEyNzUxMDA2OTIxNTQ5NDIyNA.GPB-lc.2wPyk7UxGZ201pCRrG3ALL0JSAlgO9EBJbtafE",
+    "token": "MTEyOTA4Mzk5MTIwMzUzMjg2Mg.GkassL.DuE_TJ45l8D5Dx5-AQFkZGtNESku6Rf8PSJwGA",
+    "offline_client_id": "1129000942159794176",
+    "online_client_id": "1129000942159794176",
+    "offline_token": "MTEyOTAwMDk0MjE1OTc5NDE3Ng.GB6SUc.yTbhKEnqJQUR-BWd1fLjhD4hE3QCV_aYy_IrWQ",
+    "online_token": "MTEyOTAwMDk0MjE1OTc5NDE3Ng.GB6SUc.yTbhKEnqJQUR-BWd1fLjhD4hE3QCV_aYy_IrWQ",
     "handshake": "http://147.189.168.195:1337/callback"
 }

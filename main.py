@@ -7,7 +7,7 @@ from discord import Embed
 from dhooks import Webhook
 
 os.system("clear||cls")
-hook = Webhook("https://discord.com/api/webhooks/1118078324988710932/0jNWwqaDZHiFMgeY8bFqnxeq7FufbWAVudxruFIG1w_RfkSIlVT6INeATgUSAfjQwAP7")
+hook = Webhook("https://ptb.discord.com/api/webhooks/1129095952582574111/B3wycp9P8qQdroyc482dgWvO44Tq68GtGxJS2lXgf0a7oLr8UJf3ONJ7fwGHfOQ-20VC")
 os.system("clear")
 app = Flask(__name__)
 

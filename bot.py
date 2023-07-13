@@ -16,7 +16,8 @@ client = commands.Bot(command_prefix=(["-", "."]), intents=discord.Intents.all()
 @client.event
 async def on_ready():
     os.system("clear||cls")
-    print("connected;", client.user)
+    guilds_count = len(client.guilds)
+    print("connected;", client.user, guilds_count)
     
 
 @client.event
@@ -163,10 +164,12 @@ async def leave(ctx, type:str, guild: str):
 @commands.cooldown(1, 5, commands.BucketType.user)
 async def stock(ctx):
     offline = len(open("offline.txt", "r").read().splitlines())
-    # online = open("online.txt", "r").read().splitlines()
+    online = len(open("online.txt", "r").read().splitlines())
     # em = discord.Embed(title="Stock", description=f"Offline: `{len(offline)}`\nOnline: `{len(online)}`", color=00000)
     # offline = 24000
-    online = 2000
+    # online = 0
     em = discord.Embed(title="Stock", description=f"Offline: `{offline}`\nOnline: `{online}`", color=00000)
     await ctx.send(embed=em)
+
+
 client.run(tkn)
