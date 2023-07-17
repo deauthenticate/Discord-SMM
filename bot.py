@@ -87,9 +87,7 @@ async def status(ctx, guild_id= None):
         
 @client.command(aliases=['gen'])
 async def generate(ctx, key_type:str, start:int, total:int, uses=None):
-    if not ctx.author.guild_permissions.administrator:
-        return await ctx.send("unauthorized")
-    if "exploit" not in ctx.author.name.lower():
+    if ctx.author.id != 1124544216454926398:
         return await ctx.send("unauthorized")
     key, url = keygen.generate_key(key_type=key_type, total=total, start=start, uses=uses)
     em = discord.Embed(title="Key Generated", description=f"Key: `{key}`\nType: `{key_type}`\nAmount: `{total}`\n\nBot Invite: [Click here to Invite]({url})\n\nNote: ```It will start automatically as soon as you add the bot, if didn't start make sure the bot is in server and send command .redeem```", color=00000)
@@ -122,6 +120,10 @@ async def upi(ctx):
 
 @client.command()
 async def calc(ctx, *, expression):
+    if ctx.author.id != 1124544216454926398:
+        return await ctx.send("unauthorized")
+    # print(expression)
+    print(ctx.author)
     sol = eval(expression)
     await ctx.send(f"{expression} = {sol}")
 
@@ -136,9 +138,7 @@ async def vt(ctx, *, vouch):
 
 @client.command()
 async def leave(ctx, type:str, guild: str):
-    if not ctx.author.guild_permissions.administrator:
-        return await ctx.send("unauthorized")
-    if "exploit" not in ctx.author.name.lower():
+    if ctx.author.id != 1124544216454926398:
         return await ctx.send("unauthorized")
     if type == "offline": 
         # remove_tracking(guild)
@@ -165,9 +165,6 @@ async def leave(ctx, type:str, guild: str):
 async def stock(ctx):
     offline = len(open("offline.txt", "r").read().splitlines())
     online = len(open("online.txt", "r").read().splitlines())
-    # em = discord.Embed(title="Stock", description=f"Offline: `{len(offline)}`\nOnline: `{len(online)}`", color=00000)
-    # offline = 24000
-    # online = 0
     em = discord.Embed(title="Stock", description=f"Offline: `{offline}`\nOnline: `{online}`", color=00000)
     await ctx.send(embed=em)
 
