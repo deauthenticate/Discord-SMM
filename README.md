@@ -9,7 +9,7 @@ A fully automatic token joiner for discord using oAuth2 workflow.
 - Auto skips already in tokens within 1 minute depending on the server size before continuing with joining.<br>
 - Logs every event on webhook ( completion, errors etc. with detailed information )<br>
 - A bot to create keys manually and track running orders<br>
-- Advanced error handelling, attempts to serve flawless joining.<br>
+- Advanced error handling, attempts to serve flawless joining.<br>
 - Multi Threaded, Can join in multiple servers at the same time concurrently.
 
 ## Usage
@@ -19,4 +19,4 @@ A fully automatic token joiner for discord using oAuth2 workflow.
 3. Add auths in offline.txt or online.txt depending on the type.<br>
 4. Configure bot's client id, client secret, webhook and your server url followed by /callback in config.json<br>
 5. Run python main.py<br>
-6. Run python webhook.py for sellix integration if required, add its url in dynamic section of sellix.
+6. Run python webhook.py for sellix integration if required, and add its url in the dynamic section of sellix.
